@@ -36,7 +36,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.run_number }}
-          release_name: Release ${{ github.run_number }}
+          release_name: Ver 0.${{ github.run_number }}
           body: |
             Test Release
           draft: false
@@ -50,5 +50,5 @@ jobs:
         with:
            upload_url: ${{ steps.create_release.outputs.upload_url }}
            asset_path: dist/main.exe
-           asset_name: 音乐下载APP-${{ github.run_number }}.exe
+           asset_name: MusicDownloadApp_v0.${{ github.run_number }}.exe
            asset_content_type: application/octet-stream
