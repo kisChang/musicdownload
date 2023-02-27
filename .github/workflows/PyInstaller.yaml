@@ -23,8 +23,7 @@ jobs:
           pip install pyinstaller
       - name: Run pyinstaller
         run: |
-#          python -m PyInstaller app.spec
-          pyinstaller  --onefile --windowed -i .\resource\main.ico --additional-hooks-dir=. main.py
+          python -m PyInstaller main.spec
       - uses: actions/upload-artifact@v2
         with:
           name: app
