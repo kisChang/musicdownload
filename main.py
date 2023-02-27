@@ -1,14 +1,13 @@
-import tkinter as tk
-from tkinter import ttk
-from tkinter import filedialog
-from tkinterdnd2 import DND_FILES, TkinterDnD
-import requests
-import jsonpath
-import os
-import win32api
-import time
-from urllib.request import urlretrieve
 import _thread
+import os
+import time
+import tkinter as tk
+from tkinter import filedialog
+from tkinter import ttk
+import jsonpath
+import requests
+import win32api
+from tkinterdnd2 import DND_FILES, TkinterDnD
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
