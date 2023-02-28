@@ -38,7 +38,7 @@ jobs:
           tag_name: ${{ github.run_number }}
           release_name: Ver 0.${{ github.run_number }}
           body: |
-            Test Release
+            Release By Action: ${{ github.event.head_commit.message }}
           draft: false
           prerelease: false
 
