@@ -1,6 +1,7 @@
 import _thread
 import os
 import time
+import re
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import ttk
@@ -13,6 +14,12 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
     "x-requested-with": "XMLHttpRequest",
 }
+
+
+def fixName(name, repl=' '):
+    rstr = r"[\/\\\:\*\?\"\<\>\|]"  # '/ \ : * ? " < > |'
+    new_title = re.sub(rstr, repl, name)
+    return new_title
 
 
 class GUI:
@@ -124,7 +131,8 @@ class GUI:
     def song_download(self, url, title, author):
         self.log('歌曲:{0}-{1},正在下载...'.format(title, author))
         # 下载
-        path = '{0}{1}-{2}.mp3'.format(self.location_var.get(), title, author)
+        file_name = fixName('{0}-{1}.mp3'.format(title, author), "_")  # fix 文件名称中的问题
+        path = '{0}{1}'.format(self.location_var.get(), file_name)
         try:
             if self.down_file(url, path):
                 self.log('下载完毕,{0}-{1}'.format(title, author))
@@ -136,8 +144,8 @@ class GUI:
     @staticmethod
     def down_file(url, path) -> bool:
         down_res = requests.get(url, headers=headers)
-        contentType = down_res.headers['content-type']
-        if down_res.status_code == 200 and contentType.find('audio') != -1:
+        content_type = down_res.headers['content-type']
+        if down_res.status_code == 200 and content_type.find('audio') != -1:
             with open(path, "wb") as code:
                 code.write(down_res.content)
             return True
@@ -203,5 +211,10 @@ class GUI:
 if __name__ == '__main__':
     root = TkinterDnD.Tk()
     gui = GUI(root)
-    root.geometry('600x650+400+200')
+    nScreenWid = root.winfo_screenwidth()
+    nScreenHei = root.winfo_screenheight()
+    nCurWid = 600  # 窗体高宽
+    nCurHeight = 650  # 窗体高宽
+    geometry = "%dx%d+%d+%d" % (nCurWid, nCurHeight, nScreenWid / 2 - nCurWid / 2, nScreenHei / 2 - nCurHeight / 2)
+    root.geometry(geometry)
     root.mainloop()
