@@ -67,20 +67,30 @@ class GUI:
         self.label = tk.Label(self.middle_frame, text="请输入下载的歌曲：", font=('楷体', 15))
         self.label.grid(row=3, columnspan=3, sticky='W')
         self.addr = tk.StringVar(value='')
-        self.oneName = tk.Entry(self.middle_frame, font=('宋体', 20), textvariable=self.addr, width=25)
-        self.oneName.grid(row=4, column=0, padx=5, pady=5)
+        # self.oneName = tk.Text(self.middle_frame, font=('宋体', 20), textvariable=self.addr, width=25)
+        self.oneName = tk.Text(self.middle_frame, width=35, height=1, font=('宋体', 20), wrap='none')
+        self.oneName.bind("<Return>", self.enter_one_name)
+        self.oneName.grid(row=4, columnspan=3, sticky="NSEW")
         # 单选按钮
-        self.platfrom = tk.StringVar(value='qq')
+        self.platfrom = tk.StringVar(value='netease')
         self.r1 = tk.Radiobutton(self.middle_frame, text='网易云', variable=self.platfrom, value='netease',
                                  font=('楷体', 13))
-        self.r1.grid(row=4, column=1, padx=5, pady=5)
+        self.r1.grid(row=5, column=0, padx=5, pady=5)
         self.r2 = tk.Radiobutton(self.middle_frame, text='QQ', variable=self.platfrom, value='qq', font=('楷体', 13))
-        self.r2.grid(row=4, column=2, padx=5, pady=5)
+        self.r2.grid(row=5, column=2, padx=5, pady=5)
         # 下载按钮
-        self.button1 = tk.Button(self.middle_frame, text='开始下载', font=('楷体', 15), command=self.one_download)
-        self.button1.grid(row=5, column=1, padx=5, pady=5, sticky='w')
-        self.button2 = tk.Button(self.middle_frame, text='退出程序', font=('楷体', 15), command=root.quit)
-        self.button2.grid(row=5, column=2, padx=5, pady=5, sticky='e')
+        self.search = tk.Listbox(self.middle_frame, font=('楷体', 13))
+        self.search.grid(row=6, column=0, columnspan=2, rowspan=3, sticky="NSEW")
+        self.search.bind('<<ListboxSelect>>', self.listbox_click)
+        self.rv_list = []
+        self.rv_list_index = -1
+
+        self.button1 = tk.Button(self.middle_frame, text='尝试检索', font=('楷体', 15), command=self.one_search)
+        self.button1.grid(row=6, column=2, padx=5, pady=5, sticky='w')
+        self.button2 = tk.Button(self.middle_frame, text='直接下载', font=('楷体', 15), command=self.one_download)
+        self.button2.grid(row=7, column=2, padx=5, pady=5, sticky='w')
+        self.button3 = tk.Button(self.middle_frame, text='退出程序', font=('楷体', 15), command=root.quit)
+        self.button3.grid(row=8, column=2, padx=5, pady=5, sticky='w')
 
         # 底部区域
         self.text = tk.Listbox(self.bottom_frame, font=('楷体', 13), width=60, height=15)
@@ -90,6 +100,10 @@ class GUI:
         self.top_frame.pack()
         self.middle_frame.pack()
         self.bottom_frame.pack()
+
+    def enter_one_name(self, event):
+        self.one_search()
+        return "break"
 
     def open_file_dialog(self, event):
         filetypes = [
@@ -176,8 +190,25 @@ class GUI:
 
             _thread.start_new_thread(down_work_thread, ())
 
+    def listbox_click(self, event):
+        sel = self.search.curselection()
+        if sel and sel[0]:
+            name = self.search.get(sel)
+            self.rv_list_index = sel[0]
+            self.oneName.delete(1.0, tk.END)
+            self.oneName.insert(tk.END, name)
+
+    def one_search(self):
+        name = self.oneName.get("1.0", tk.END)
+        platfrom = self.platfrom.get()
+        json = self._run_search(name, platfrom)
+        self.rv_list = json.get('data', [])
+        self.search.delete(0, )
+        for once in self.rv_list[:10]:
+            self.search.insert(tk.END, "{} - {}".format(once.get('title', ''), once.get('author', '')))
+
     def one_download(self):
-        name = self.oneName.get()
+        name = self.oneName.get("1.0", tk.END)
         platfrom = self.platfrom.get()
 
         if len(name) < 1:
@@ -185,11 +216,23 @@ class GUI:
             return
 
         def down_one_thread():
-            self.get_music_name(name, platfrom)
+            if self.rv_list_index < 0:
+                self.get_music_name(name, platfrom)
+            else:
+                once = dict(self.rv_list[self.rv_list_index])
+                self.rv_list_index = -1
+                self.song_download(once.get('url'), once.get('title'), once.get('author'))
 
         _thread.start_new_thread(down_one_thread, ())
 
     def get_music_name(self, name, platfrom):
+        json_text = self._run_search(name, platfrom)
+        title = jsonpath.jsonpath(json_text, '$..title')
+        author = jsonpath.jsonpath(json_text, '$..author')
+        url = jsonpath.jsonpath(json_text, '$..url')
+        self.song_download(url[0], title[0], author[0])
+
+    def _run_search(self, name, platfrom):
         url = 'https://music.liuzhijin.cn/'
         param = {
             "input": name,
@@ -198,12 +241,7 @@ class GUI:
             "page": 1,
         }
         res = requests.post(url, data=param, headers=headers)
-        json_text = res.json()
-
-        title = jsonpath.jsonpath(json_text, '$..title')
-        author = jsonpath.jsonpath(json_text, '$..author')
-        url = jsonpath.jsonpath(json_text, '$..url')
-        self.song_download(url[0], title[0], author[0])
+        return res.json()
 
 
 # .py to .exe :
@@ -214,7 +252,7 @@ if __name__ == '__main__':
     nScreenWid = root.winfo_screenwidth()
     nScreenHei = root.winfo_screenheight()
     nCurWid = 600  # 窗体高宽
-    nCurHeight = 650  # 窗体高宽
+    nCurHeight = 750  # 窗体高宽
     geometry = "%dx%d+%d+%d" % (nCurWid, nCurHeight, nScreenWid / 2 - nCurWid / 2, nScreenHei / 2 - nCurHeight / 2)
     root.geometry(geometry)
     root.mainloop()
