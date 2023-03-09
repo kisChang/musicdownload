@@ -9,6 +9,7 @@ import jsonpath
 import requests
 import win32api
 from tkinterdnd2 import DND_FILES, TkinterDnD
+import ota
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
@@ -69,7 +70,7 @@ class GUI:
         self.oneName = tk.Text(self.middle_frame, width=35, height=1, font=('宋体', 20), wrap='none')
         self.oneName.bind("<Return>", self.enter_one_name)
         self.oneName.grid(row=4, columnspan=3, sticky="NSEW")
-        self.oneName.insert(tk.END, '白鸽') # dev code
+        self.oneName.insert(tk.END, '')  # dev code
         # 单选按钮
         self.platfrom = tk.StringVar(value='netease')
         self.r1 = tk.Radiobutton(self.middle_frame, text='网易云', variable=self.platfrom, value='netease',
@@ -254,4 +255,5 @@ if __name__ == '__main__':
     nCurHeight = 750  # 窗体高宽
     geometry = "%dx%d+%d+%d" % (nCurWid, nCurHeight, nScreenWid / 2 - nCurWid / 2, nScreenHei / 2 - nCurHeight / 2)
     root.geometry(geometry)
+    ota.check_for_updates("11", root)
     root.mainloop()
