@@ -66,11 +66,10 @@ class GUI:
         label2.grid(row=2, columnspan=3, sticky='W')
         self.label = tk.Label(self.middle_frame, text="请输入下载的歌曲：", font=('楷体', 15))
         self.label.grid(row=3, columnspan=3, sticky='W')
-        self.addr = tk.StringVar(value='')
-        # self.oneName = tk.Text(self.middle_frame, font=('宋体', 20), textvariable=self.addr, width=25)
         self.oneName = tk.Text(self.middle_frame, width=35, height=1, font=('宋体', 20), wrap='none')
         self.oneName.bind("<Return>", self.enter_one_name)
         self.oneName.grid(row=4, columnspan=3, sticky="NSEW")
+        self.oneName.insert(tk.END, '白鸽') # dev code
         # 单选按钮
         self.platfrom = tk.StringVar(value='netease')
         self.r1 = tk.Radiobutton(self.middle_frame, text='网易云', variable=self.platfrom, value='netease',
@@ -203,7 +202,7 @@ class GUI:
         platfrom = self.platfrom.get()
         json = self._run_search(name, platfrom)
         self.rv_list = json.get('data', [])
-        self.search.delete(0, )
+        self.search.delete(0, tk.END)
         for once in self.rv_list[:10]:
             self.search.insert(tk.END, "{} - {}".format(once.get('title', ''), once.get('author', '')))
 
