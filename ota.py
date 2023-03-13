@@ -13,6 +13,7 @@ app_name = 'MusicDownloadApp'
 api_url = f'https://api.github.com/repos/{github_username}/{repo_name}/releases/latest'
 asset_url_format = 'https://ghproxy.com/https://github.com/{}/{}/releases/download/{}/{}'
 
+
 # 获取最新版本信息
 def get_latest_version():
     response = requests.get(api_url)

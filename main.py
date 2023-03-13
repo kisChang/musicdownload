@@ -12,12 +12,13 @@ from tkinterdnd2 import DND_FILES, TkinterDnD
 import ota
 
 headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 "
+                  "Safari/537.36",
     "x-requested-with": "XMLHttpRequest",
 }
 
 
-def fixName(name, repl=' '):
+def fix_name(name, repl=' '):
     rstr = r"[\/\\\:\*\?\"\<\>\|]"  # '/ \ : * ? " < > |'
     new_title = re.sub(rstr, repl, name)
     return new_title
@@ -70,7 +71,7 @@ class GUI:
         self.oneName = tk.Text(self.middle_frame, width=35, height=1, font=('宋体', 20), wrap='none')
         self.oneName.bind("<Return>", self.enter_one_name)
         self.oneName.grid(row=4, columnspan=3, sticky="NSEW")
-        self.oneName.insert(tk.END, '')  # dev code
+        self.oneName.insert(tk.END, '白鸽')  # dev code
         # 单选按钮
         self.platfrom = tk.StringVar(value='netease')
         self.r1 = tk.Radiobutton(self.middle_frame, text='网易云', variable=self.platfrom, value='netease',
@@ -145,7 +146,7 @@ class GUI:
     def song_download(self, url, title, author):
         self.log('歌曲:{0}-{1},正在下载...'.format(title, author))
         # 下载
-        file_name = fixName('{0}-{1}.mp3'.format(title, author), "_")  # fix 文件名称中的问题
+        file_name = fix_name('{0}-{1}.mp3'.format(title, author), "_")  # fix 文件名称中的问题
         path = '{0}{1}'.format(self.location_var.get(), file_name)
         try:
             if self.down_file(url, path):
@@ -192,7 +193,7 @@ class GUI:
 
     def listbox_click(self, event):
         sel = self.search.curselection()
-        if sel and sel[0]:
+        if sel:
             name = self.search.get(sel)
             self.rv_list_index = sel[0]
             self.oneName.delete(1.0, tk.END)
@@ -255,5 +256,5 @@ if __name__ == '__main__':
     nCurHeight = 750  # 窗体高宽
     geometry = "%dx%d+%d+%d" % (nCurWid, nCurHeight, nScreenWid / 2 - nCurWid / 2, nScreenHei / 2 - nCurHeight / 2)
     root.geometry(geometry)
-    ota.check_for_updates("12", root)
+    ota.check_for_updates("15", root)
     root.mainloop()
