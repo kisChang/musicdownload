@@ -1,54 +1,60 @@
+
 name: PyInstaller Windows
 
 on:
   push:
-    branches: [ "main" ]
-  # Allows you to run this workflow manually from the Actions tab
+    tags:
+      - 'v*'  # 匹配v开头的tag
   workflow_dispatch:
 
 jobs:
   build-windows:
-    runs-on: windows-2019
+    runs-on: windows-2022  # 更新到较新的Windows版本
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v3  # 更新到v3版本
+        
       - name: Install Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4  # 更新到v4版本
         with:
           python-version: '3.8'
           architecture: 'x64'
+          
       - name: Install requirements and installer
         run: |
           pip install -r requirements.txt
           pip install pyinstaller
+          
       - name: Run pyinstaller
         run: |
           python -m PyInstaller main.spec
-      - uses: actions/upload-artifact@v2
+          
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4  # 更新到v4版本
         with:
           name: main
           path: dist
-
-      - name: create release
+          
+      - name: Create release
         id: create_release
-        uses: actions/create-release@v1
+        uses: actions/create-release@v2  # 更新到v2版本
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.run_number }}
-          release_name: Ver 0.${{ github.run_number }}
+          tag_name: ${{ github.ref_name }}  # 使用触发工作流的tag名称
+          release_name: Release ${{ github.ref_name }}
           body: |
             Release By Action: ${{ github.event.head_commit.message }}
           draft: false
           prerelease: false
-
+          
       - name: Upload release asset
         id: upload-release-asset
-        uses: actions/upload-release-asset@v1
+        uses: actions/upload-release-asset@v2  # 更新到v2版本
         env:
-           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-           upload_url: ${{ steps.create_release.outputs.upload_url }}
-           asset_path: dist/main.exe
-           asset_name: MusicDownloadApp_v0.${{ github.run_number }}.exe
-           asset_content_type: application/octet-stream
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/main.exe
+          asset_name: MusicDownloadApp_${{ github.ref_name }}.exe  # 使用tag名称作为版本号
+          asset_content_type: application/octet-stream
