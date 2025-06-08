@@ -28,6 +28,10 @@ jobs:
         run: |
           python -m PyInstaller main.spec
           
+      - name: Rename executable
+        run: |
+          mv dist/main.exe dist/MusicDownloadApp_V${{ github.ref_name }}.exe
+          
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -42,4 +46,4 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: Ver ${{ github.ref_name }}
           files: |
-            dist/main.exe:dist/MusicDownloadApp_V${{ github.ref_name }}.exe
+            dist/MusicDownloadApp_V${{ github.ref_name }}.exe
