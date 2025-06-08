@@ -18,15 +18,15 @@ asset_url_format = 'https://ghproxy.com/https://github.com/{}/{}/releases/downlo
 def get_latest_version():
     response = requests.get(api_url)
     if response.status_code == 200:
-        return response.json()['tag_name']
+        return int(response.json()['tag_name'])
     else:
-        return None
+        return 0
 
 
 # 检查是否需要更新
 def check_for_updates_thread(app_version, root):
     latest_version = get_latest_version()
-    if latest_version and latest_version != app_version:
+    if latest_version and latest_version > app_version:
         message = f'发现新版本 {latest_version}，是否下载更新？'
         if tk.messagebox.askyesno('更新提示', message):
             _thread.start_new_thread(download_latest_version, (latest_version, root))

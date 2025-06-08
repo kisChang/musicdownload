@@ -9,6 +9,8 @@ import jsonpath
 import requests
 import win32api
 from tkinterdnd2 import DND_FILES, TkinterDnD
+import tempfile
+from playsound3 import playsound
 import ota
 
 headers = {
@@ -71,27 +73,34 @@ class GUI:
         self.oneName = tk.Text(self.middle_frame, width=35, height=1, font=('宋体', 20), wrap='none')
         self.oneName.bind("<Return>", self.enter_one_name)
         self.oneName.grid(row=4, columnspan=3, sticky="NSEW")
-        self.oneName.insert(tk.END, '白鸽')  # dev code
+        self.oneName.insert(tk.END, '')  # dev code
         # 单选按钮
-        self.platfrom = tk.StringVar(value='netease')
+        self.platfrom = tk.StringVar(value='')
+        self.r2 = tk.Radiobutton(self.middle_frame, text='酷我', variable=self.platfrom, value='kuwo', font=('楷体', 13))
+        self.r2.grid(row=5, column=0, padx=5, pady=5)
+        self.r3 = tk.Radiobutton(self.middle_frame, text='QQ', variable=self.platfrom, value='qq', font=('楷体', 13))
+        self.r3.grid(row=5, column=1, padx=5, pady=5)
         self.r1 = tk.Radiobutton(self.middle_frame, text='网易云', variable=self.platfrom, value='netease',
                                  font=('楷体', 13))
-        self.r1.grid(row=5, column=0, padx=5, pady=5)
-        self.r2 = tk.Radiobutton(self.middle_frame, text='QQ', variable=self.platfrom, value='qq', font=('楷体', 13))
-        self.r2.grid(row=5, column=2, padx=5, pady=5)
+        self.r1.grid(row=5, column=2, padx=5, pady=5)
         # 下载按钮
         self.search = tk.Listbox(self.middle_frame, font=('楷体', 13))
-        self.search.grid(row=6, column=0, columnspan=2, rowspan=3, sticky="NSEW")
+        self.search.grid(row=6, column=0, columnspan=2, rowspan=4, sticky="NSEW")
         self.search.bind('<<ListboxSelect>>', self.listbox_click)
         self.rv_list = []
         self.rv_list_index = -1
 
-        self.button1 = tk.Button(self.middle_frame, text='尝试检索', font=('楷体', 15), command=self.one_search)
+        self.button1 = tk.Button(self.middle_frame, text='检索音乐', font=('楷体', 15), command=self.one_search)
         self.button1.grid(row=6, column=2, padx=5, pady=5, sticky='w')
+        
+        self.button_player = tk.Button(self.middle_frame, text='试听选中', font=('楷体', 15), command=self.one_listen)
+        self.button_player.grid(row=7, column=2, padx=5, pady=5, sticky='w')
+        self.player = None
+
         self.button2 = tk.Button(self.middle_frame, text='直接下载', font=('楷体', 15), command=self.one_download)
-        self.button2.grid(row=7, column=2, padx=5, pady=5, sticky='w')
+        self.button2.grid(row=8, column=2, padx=5, pady=5, sticky='w')
         self.button3 = tk.Button(self.middle_frame, text='退出程序', font=('楷体', 15), command=root.quit)
-        self.button3.grid(row=8, column=2, padx=5, pady=5, sticky='w')
+        self.button3.grid(row=9, column=2, padx=5, pady=5, sticky='w')
 
         # 底部区域
         self.text = tk.Listbox(self.bottom_frame, font=('楷体', 13), width=60, height=15)
@@ -143,16 +152,20 @@ class GUI:
         self.text.see(tk.END)
         self.text.update()
 
-    def song_download(self, url, title, author):
-        self.log('歌曲:{0}-{1},正在下载...'.format(title, author))
+    def song_download(self, url, title, author, path_arg=None):
+        self.log(url)
+        if path_arg is None: self.log('歌曲:{0}-{1},正在下载...'.format(title, author))
         # 下载
-        file_name = fix_name('{0}-{1}.mp3'.format(title, author), "_")  # fix 文件名称中的问题
-        path = '{0}{1}'.format(self.location_var.get(), file_name)
+        if path_arg:
+            path = path_arg
+        else: 
+            file_name = fix_name('{0}-{1}.mp3'.format(title, author), "_")  # fix 文件名称中的问题
+            path = '{0}{1}'.format(self.location_var.get(), file_name)
         try:
             if self.down_file(url, path):
-                self.log('下载完毕,{0}-{1}'.format(title, author))
+                if path_arg is None: self.log('下载完毕,{0}-{1}'.format(title, author))
             else:
-                self.log('下载失败,{0}-{1}'.format(title, author), type='err')
+                if path_arg is None: self.log('下载失败,{0}-{1}'.format(title, author), type='err')
         except Exception as e:
             self.log('下载出错: {}'.format(e), type='err')
 
@@ -201,16 +214,36 @@ class GUI:
 
     def one_search(self):
         name = self.oneName.get("1.0", tk.END)
-        platfrom = self.platfrom.get()
-        json = self._run_search(name, platfrom)
-        self.rv_list = json.get('data', [])
+        # platfrom = self.platfrom.get()
+        json_qq = self._run_search(name, "qq")
+        self.rv_list = json_qq.get('data', [])
+        json_kuwo = self._run_search(name, "kuwo")
+        self.rv_list.extend(json_kuwo.get('data', []))
+        json_wy = self._run_search(name, "netease")
+        self.rv_list.extend(json_wy.get('data', []))
         self.search.delete(0, tk.END)
-        for once in self.rv_list[:10]:
+        for once in self.rv_list[:15]:
             self.search.insert(tk.END, "{} - {}".format(once.get('title', ''), once.get('author', '')))
+
+    def one_listen(self):
+        if self.player is not None:
+            if self.player.is_alive():
+               self.player.stop()
+            self.button_player.config(text='试听选中')
+            self.player = None
+        else:
+            if self.rv_list_index < 0:
+                self.log("请选中搜索结果后试听！", type='err')
+            else :
+                once = dict(self.rv_list[self.rv_list_index])
+                tmp_path = os.path.join(tempfile.gettempdir(), 'tmp.mp3')
+                self.song_download(once.get('url'), once.get('title'), once.get('author'), tmp_path)
+                self.player = playsound(tmp_path, block=False)
+                self.log("开始试听！", type='err')
+                self.button_player.config(text='试听中')
 
     def one_download(self):
         name = self.oneName.get("1.0", tk.END)
-        platfrom = self.platfrom.get()
 
         if len(name) < 1:
             self.log("请输入歌曲名称！", type='err')
@@ -218,10 +251,12 @@ class GUI:
 
         def down_one_thread():
             if self.rv_list_index < 0:
-                self.get_music_name(name, platfrom)
+                self.log("请选中搜索结果后下载！", type='err')
+                # platfrom = self.platfrom.get()
+                # self.get_music_name(name, platfrom)
             else:
                 once = dict(self.rv_list[self.rv_list_index])
-                self.rv_list_index = -1
+                # self.rv_list_index = -1
                 self.song_download(once.get('url'), once.get('title'), once.get('author'))
 
         _thread.start_new_thread(down_one_thread, ())
@@ -256,5 +291,5 @@ if __name__ == '__main__':
     nCurHeight = 750  # 窗体高宽
     geometry = "%dx%d+%d+%d" % (nCurWid, nCurHeight, nScreenWid / 2 - nCurWid / 2, nScreenHei / 2 - nCurHeight / 2)
     root.geometry(geometry)
-    ota.check_for_updates("15", root)
+    ota.check_for_updates(17, root)
     root.mainloop()
