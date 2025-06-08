@@ -9,52 +9,41 @@ on:
 
 jobs:
   build-windows:
-    runs-on: windows-2022  # 更新到较新的Windows版本
+    runs-on: windows-2022
     steps:
       - name: Checkout
-        uses: actions/checkout@v3  # 更新到v3版本
+        uses: actions/checkout@v4
         
       - name: Install Python
-        uses: actions/setup-python@v4  # 更新到v4版本
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.8'
+          python-version: '3.12'
           architecture: 'x64'
           
-      - name: Install requirements and installer
+      - name: Install requirements
         run: |
           pip install -r requirements.txt
           pip install pyinstaller
           
-      - name: Run pyinstaller
+      - name: Build with PyInstaller
         run: |
           python -m PyInstaller main.spec
           
       - name: Upload artifact
-        uses: actions/upload-artifact@v4  # 更新到v4版本
+        uses: actions/upload-artifact@v4
         with:
-          name: main
+          name: executable
           path: dist
           
-      - name: Create release
-        id: create_release
-        uses: actions/create-release@v2  # 更新到v2版本
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref_name }}  # 使用触发工作流的tag名称
-          release_name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           body: |
-            Release By Action: ${{ github.event.head_commit.message }}
-          draft: false
-          prerelease: false
-          
-      - name: Upload release asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v2  # 更新到v2版本
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/main.exe
-          asset_name: MusicDownloadApp_${{ github.ref_name }}.exe  # 使用tag名称作为版本号
-          asset_content_type: application/octet-stream
+            Auto-generated release for ${{ github.ref_name }}
+            Commit: ${{ github.event.head_commit.message }}
+          files: |
+            dist/main.exe
