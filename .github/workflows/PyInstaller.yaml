@@ -1,4 +1,3 @@
-
 name: PyInstaller Windows
 
 on:
@@ -41,9 +40,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          body: |
-            Auto-generated release for ${{ github.ref_name }}
-            Commit: ${{ github.event.head_commit.message }}
+          name: Ver ${{ github.ref_name }}
           files: |
-            dist/main.exe
+            dist/main.exe:dist/MusicDownloadApp_V${{ github.ref_name }}.exe
